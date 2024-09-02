@@ -121,9 +121,13 @@ public class NodeInfoCatalog {
 
   /** Close the catalog. */
   public void close() {
-    listenerIds.forEach(nodeInfoMap::removeListener);
-    setNodeInfo(null);
-    vertx.cancelTimer(timerId);
+    try {
+      listenerIds.forEach(nodeInfoMap::removeListener);
+      setNodeInfo(null);
+      vertx.cancelTimer(timerId);
+    } finally {
+      executor.shutdown();
+    }
   }
 
   @Override

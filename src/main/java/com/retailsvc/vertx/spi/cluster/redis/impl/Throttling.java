@@ -212,6 +212,8 @@ class Throttling {
       if (interrupted) {
         Thread.currentThread().interrupt();
       }
+    } finally {
+      executorService.shutdown();
     }
   }
 }
