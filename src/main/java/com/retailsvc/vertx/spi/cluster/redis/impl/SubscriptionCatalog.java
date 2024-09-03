@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -182,7 +183,32 @@ public class SubscriptionCatalog {
         fireRegistrationUpdateEvent(address);
       } else {
         ownSubs.computeIfPresent(address, (k, v) -> removeFromSet(registrationInfo, v));
-        subsMap.remove(address, registrationInfo);
+        
+        boolean removed = subsMap.remove(address, registrationInfo);
+        //-> @wjw_add 删除指令来的早了,Address还不存在,这时候重试几次!
+        if(!removed) {
+          int retryCount=0;
+          while(!removed && retryCount <=10) {
+            try {
+              retryCount++;
+              TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              break;
+            }
+  
+            log.warn("要删除的Address还不存在:{}, 重试第:{}次!", address, retryCount);
+            removed = subsMap.remove(address, registrationInfo);
+          }
+          
+          if(removed) {
+            log.warn("重试第:{}次后,成功删除Address:{}", retryCount, address);
+          } else {
+            log.warn("重试第:{}次后,要删除的Address还不存在:{}", retryCount, address);
+          }
+        }
+        //<- @wjw_add 删除指令来的早了,Address还不存在,这时候重试几次!
+        
         topic.publish(address);
       }
     } finally {
