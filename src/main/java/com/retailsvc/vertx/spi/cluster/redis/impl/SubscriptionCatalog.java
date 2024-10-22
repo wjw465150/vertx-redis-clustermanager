@@ -175,7 +175,7 @@ public class SubscriptionCatalog {
    * @param registrationInfo the registration information to remove
    */
   public void remove(String address, RegistrationInfo registrationInfo) {
-    Lock lock = readWriteLock.readLock();
+    Lock lock = readWriteLock.readLock();  // @wjw_note: 因为读锁与读锁之间是共享的,所以可以同时lock
     lock.lock();
     try {
       if (registrationInfo.localOnly()) {
@@ -274,7 +274,7 @@ public class SubscriptionCatalog {
 
   /** Republish subscriptions that belongs to the current node (in which this is executed). */
   public void republishOwnSubs() {
-    Lock writeLock = readWriteLock.writeLock();
+    Lock writeLock = readWriteLock.writeLock();  // @wjw_note: 读锁与写锁之间是互斥的，写锁与写锁之间也是互斥的
     writeLock.lock();
     try {
       Set<String> updated = new HashSet<>();
