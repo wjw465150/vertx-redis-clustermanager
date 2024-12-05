@@ -12,6 +12,9 @@ import io.vertx.core.json.JsonObject;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
+import static java.util.Collections.unmodifiableList;
+import java.util.Arrays;
+
 class RedisConfigTest {
 
   @Test
@@ -47,6 +50,18 @@ class RedisConfigTest {
       System.setProperty("redis.connection.address", "redis://localhost:8080");
       RedisConfig config = new RedisConfig();
       assertEquals(singletonList("redis://localhost:8080"), config.getEndpoints());
+    } finally {
+      System.clearProperty("redis.connection.address");
+    }
+  }
+  
+  @Test
+  void createClusterFromSystemPropertyAddress() {
+    try {
+      System.setProperty("redis.type", "CLUSTER");
+      System.setProperty("redis.connection.address", "redis://localhost:8080,redis://localhost:8081,redis://localhost:8082");
+      RedisConfig config = new RedisConfig();
+      assertEquals(unmodifiableList(Arrays.asList("redis://localhost:8080","redis://localhost:8081","redis://localhost:8082")), config.getEndpoints());
     } finally {
       System.clearProperty("redis.connection.address");
     }

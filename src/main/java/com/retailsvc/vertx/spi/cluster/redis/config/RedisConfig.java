@@ -55,6 +55,18 @@ public class RedisConfig {
     keyNamespace = RedisConfigProps.getPropertyValue("redis.key.namespace");
     username = RedisConfigProps.getPropertyValue("redis.connection.username", null);
     password = RedisConfigProps.getPropertyValue("redis.connection.password", null);
+    
+    // @wjw_add: 添加从系统属性redis.type来传连接模式: -Dredis.type=STANDALONE | CLUSTER | REPLICATED
+    String redisType = RedisConfigProps.getPropertyValue("redis.type", ClientType.STANDALONE.name());
+    ClientType clientType = ClientType.valueOf(redisType);
+    if(clientType.equals(ClientType.CLUSTER) || clientType.equals(ClientType.REPLICATED)) {
+      this.type = clientType;
+      
+      String[] address = defaultEndpoint.split(",");
+      for(String endpoint : address) {
+        this.addEndpoint(endpoint);
+      }      
+    }
   }
 
   /**
